@@ -43,6 +43,7 @@ import {
   renderTotpEnabledPage,
   renderTotpSetupPage,
 } from "../views/account.ts";
+import { log } from "node:console";
 
 export function createAccountRouter(deps: Dependencies): Router {
   const { db, keyring } = deps;
@@ -52,6 +53,11 @@ export function createAccountRouter(deps: Dependencies): Router {
   router.get("/account", (req, res) => {
     const current = requireAuth(db, req, res);
     if (!current) return;
+    logEvent("account_accessed", {
+      userId: current.user.id,
+      email: current.user.email,
+      expiresAt: current.session.expires_at,
+    });
     res.type("html").send(renderAccountPage(current));
   });
 
