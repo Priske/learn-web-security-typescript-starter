@@ -44,6 +44,8 @@ import {
   renderTotpSetupPage,
 } from "../views/account.ts";
 import { log } from "node:console";
+import { verifyPassword } from "../auth/passwords.ts";
+import { resetDb } from "../db/reset.ts";
 
 export function createAccountRouter(deps: Dependencies): Router {
   const { db, keyring } = deps;
@@ -172,7 +174,11 @@ export function createAccountRouter(deps: Dependencies): Router {
       return;
     }
     const currentPassword = String(req.body.currentPassword ?? "");
-    if (!currentPassword) {
+
+    if (
+      !currentPassword ||
+      !verifyPassword(currentPassword, current.user.password_hash)
+    ) {
       res
         .status(403)
         .type("html")
