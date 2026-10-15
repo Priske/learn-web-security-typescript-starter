@@ -1,6 +1,7 @@
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import type { Keyring } from "../storage/keyring.ts";
+import { randomUUID } from "node:crypto";
 
 const uploadDirectory = join(process.cwd(), "data", "uploads");
 
@@ -55,10 +56,16 @@ export function storeTaxDocument(
   keyring: Keyring | undefined,
 ): StoredTaxDocument | undefined {
   mkdirSync(uploadDirectory, { recursive: true });
-  const storagePath = join(uploadDirectory, "uploaded-document");
+  const taxDocumentType = detectTaxDocumentType(buffer);
+  if (taxDocumentType === undefined) {
+    return undefined;
+  }
+  const safeName = `${randomUUID()}${taxDocumentType.extension}`;
+
+  const storagePath = join(uploadDirectory, safeName);
   writeFileSync(storagePath, encryptTaxDocument(buffer, keyring));
 
-  return { contentType: "application/octet-stream", storagePath };
+  return { contentType: taxDocumentType.contentType, storagePath };
 }
 
 export function readTaxDocument(
